@@ -1,0 +1,39 @@
+{
+  "name": "Rewrite History",
+  "description": "Allows you to rename items for datasets.",
+  "documentation": "README.md",
+
+  "namespace": "ABCD\\RewriteHistory",
+
+
+  "authors": [
+    {
+      "name": "Hauke Bartsch",
+      "email": "HaukeBartsch@gmail.com",
+      "institution": "ABCD Study, UC San Diego"
+    }
+  ],
+
+  "links": {
+    "control-center": [
+      {
+        "name": "Rewrite History",
+        "icon": "table",
+        "url": "index.php"
+      }
+    ]
+  },
+
+  "system-settings": [
+    {
+      "key": "default-allow",
+      "name": "Allow rewriting history",
+      "type": "dropdown",
+      "required": true,
+      "choices": [
+        {"value": "", "name": ""},
+        {"value": "allowItem", "name": "Allow renaming of items"}
+      ]
+    }
+  ]
+}
