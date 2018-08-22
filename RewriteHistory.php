@@ -162,6 +162,7 @@ class RewriteHistory extends AbstractExternalModule {
        //
        // check the logs for any changes on this variable
        //
+       /*
        $query = "SELECT data_values FROM redcap_log_event WHERE data_values LIKE '%".prep($oldVal)."%' AND project_id = ".$project_id;
        $result = db_query($query);
        $count = 0;
@@ -169,6 +170,20 @@ class RewriteHistory extends AbstractExternalModule {
           $count = $count + 1;
        }
        $results[] = array('type' => 'Does the newVar exist in the log (data_values)?',
+                          'redcap_metadata' => $count,
+			  'query' => json_encode($query));       
+       */
+
+       //
+       // check the logs for any changes on this variable REGEXP version (MySQL > 5.6
+       //
+       $query = "SELECT data_values FROM redcap_log_event WHERE data_values REGEXP \"".preg_quote($oldVal)." ="."\" AND project_id = ".$project_id;
+       $result = db_query($query);
+       $count = 0;
+       while($row = db_fetch_assoc( $result ) ) {
+          $count = $count + 1;
+       }
+       $results[] = array('type' => 'Does the newVar exist in the log (data_values, regexp)?',
                           'redcap_metadata' => $count,
 			  'query' => json_encode($query));       
 
