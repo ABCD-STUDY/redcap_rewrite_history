@@ -85,18 +85,22 @@ class RewriteHistory extends AbstractExternalModule {
 
        $results = array();
 
+       //
        // check in the data how often we have that value
+       //
        $query = "SELECT field_name FROM redcap_data WHERE field_name = '".prep($oldVal)."'";
        $result = db_query($query);
        $count = 0;
        while($row = db_fetch_assoc( $result ) ) {
           $count = $count + 1;
        }
-       $results[] = array('type' => 'Does data exist for this item?',
+       $results[] = array('type' => 'Does data exist for this item (field_name in redcap_data)?',
                           'redcap_data' => $count,
 			  'query' => json_encode($query));
 
+       //
        // check the data dictionary       
+       //
        $query = "SELECT field_name FROM redcap_metadata WHERE field_name = '".prep($oldVal)."' AND project_id = ".$project_id;
        $result = db_query($query);
        $count = 0;
@@ -108,32 +112,41 @@ class RewriteHistory extends AbstractExternalModule {
 			  'query' => json_encode($query));
 
 
+       //
        // check the data dictionary (new variable)
+       //
        $query = "SELECT field_name FROM redcap_metadata WHERE field_name = '".prep($newVal)."' AND project_id = ".$project_id;
        $result = db_query($query);
        $count = 0;
        while($row = db_fetch_assoc( $result ) ) {
           $count = $count + 1;
        }
-       $results[] = array('type' => 'Does the newVar exist in data dictionary?',
+       $results[] = array('type' => 'Does the newVar exist in data dictionary (field_name)?',
                           'redcap_metadata' => $count,
 			  'query' => json_encode($query));
 
 
+       //
        // check the branching logic (old variable)
-       $query = "SELECT branching_logic FROM redcap_metadata WHERE branching_logic LIKE '%[".prep($oldVal)."]%' AND project_id = ".$project_id;
+       //
+       $query = "SELECT branching_logic,field_name FROM redcap_metadata WHERE branching_logic LIKE '%[".prep($oldVal)."]%' AND project_id = ".$project_id;
        $result = db_query($query);
        $count = 0;
+       $ar = array();
        while($row = db_fetch_assoc( $result ) ) {
+          $ar[] = $row['field_name'];
           $count = $count + 1;
        }
-       $results[] = array('type' => 'Does the newVar exist in any branching logic?',
+       $results[] = array('type' => 'Does the newVar exist in any branching logic (branching_logic)?',
                           'redcap_metadata' => $count,
+			  'variables' => implode(",",$ar),
 			  'query' => json_encode($query));       
 
 
 
+       //
        // check the logs for any changes on this variable
+       //
        $query = "SELECT sql_log FROM redcap_log_event WHERE sql_log LIKE '%".prep($oldVal)."%' AND project_id = ".$project_id;
        $result = db_query($query);
        $count = 0;
@@ -146,7 +159,9 @@ class RewriteHistory extends AbstractExternalModule {
 
 
 
+       //
        // check the logs for any changes on this variable
+       //
        $query = "SELECT data_values FROM redcap_log_event WHERE data_values LIKE '%".prep($oldVal)."%' AND project_id = ".$project_id;
        $result = db_query($query);
        $count = 0;
@@ -156,7 +171,6 @@ class RewriteHistory extends AbstractExternalModule {
        $results[] = array('type' => 'Does the newVar exist in the log (data_values)?',
                           'redcap_metadata' => $count,
 			  'query' => json_encode($query));       
-
 
 
        echo(json_encode($results));
