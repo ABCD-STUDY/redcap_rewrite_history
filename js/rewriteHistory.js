@@ -6,10 +6,7 @@ jQuery(document).ready(function () {
 
     jQuery('#start-rewrite').on('click', function() {
 	alert('not implemented yet');
-    });
-    
-    jQuery('#start-dryrun').on('click', function() {
-	
+
 	// only do something if the checkbox is on
 	var oldV = jQuery('#oldname').val();
 	var newV = jQuery('#newname').val();
@@ -31,6 +28,25 @@ jQuery(document).ready(function () {
 	    return;
 	}
 	project_id = jQuery('#project-list').val();
+
+    });
+    
+    jQuery('#start-dryrun').on('click', function() {
+	
+	// only do something if the checkbox is on
+	var oldV = jQuery('#oldname').val();
+	var newV = jQuery('#newname').val();
+	if (oldV === "" || newV === "") {
+	    alert("Error: no value provided");
+	    return;
+	}
+	
+	// now check if we can do this
+	if (oldV == "id_redcap") {
+	    alert("Error: changing id_redcap is not allowed");
+	    return;
+	}
+	project_id = jQuery('#project-list').val();
 	
 	// can I call now php again?
 	jQuery.post('', { "action": "runDry", "oldVal": oldV, "newVal": newV, "project_id": project_id }, function(data) {
@@ -42,4 +58,3 @@ jQuery(document).ready(function () {
     });
     
 });
-
