@@ -81,8 +81,48 @@ class RewriteHistory extends AbstractExternalModule {
 <?php
     }
 
-    public function dryRun($oldVal, $newVal) {
-       echo(json_encode(array('message' => 'rename: '.$oldVal.' into '.$newVal)));    
+    public function dryRun($oldVal, $newVal, $project_id) {
+
+       $results = array();
+
+       // check in the data how often we have that value
+       $query = "SELECT field_name FROM redcap_data WHERE field_name = '".prep($oldVal)."'";
+       $result = db_query($query);
+       $count = 0;
+       while($row = db_fetch_assoc( $result ) ) {
+          $count = $count + 1;
+       }
+       $results[] = array('type' => 'Does data exist for this item?',
+                          'redcap_data' => $count,
+			  'query' => json_encode($query));
+
+       // check the data dictionary       
+       $query = "SELECT field_name FROM redcap_metadata WHERE field_name = '".prep($oldVal)."' AND project_id = ".$project_id;
+       $result = db_query($query);
+       $count = 0;
+       while($row = db_fetch_assoc( $result ) ) {
+          $count = $count + 1;
+       }
+       $results[] = array('type' => 'Does the oldVar exist in data dictionary?',
+                          'redcap_metadata' => $count,
+			  'query' => json_encode($query));
+
+
+       // check the data dictionary (new variable)
+       $query = "SELECT field_name FROM redcap_metadata WHERE field_name = '".prep($newVal)."' AND project_id = ".$project_id;
+       $result = db_query($query);
+       $count = 0;
+       while($row = db_fetch_assoc( $result ) ) {
+          $count = $count + 1;
+       }
+       $results[] = array('type' => 'Does the newVar exist in data dictionary?',
+                          'redcap_metadata' => $count,
+			  'query' => json_encode($query));
+
+       
+
+
+       echo(json_encode($results));
     }
     
     public function run() {

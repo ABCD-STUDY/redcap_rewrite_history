@@ -1,6 +1,9 @@
 
 jQuery(document).ready(function () {
 
+    jQuery('#oldname').val('pmq1');
+    jQuery('#newname').val('pmq1_newname');
+
     jQuery('#start-rewrite').on('click', function() {
 	alert('not implemented yet');
     });
@@ -27,12 +30,14 @@ jQuery(document).ready(function () {
 	    alert("Error: changing id_redcap is not allowed");
 	    return;
 	}
-
+	project_id = jQuery('#project-list').val();
+	
 	// can I call now php again?
-	jQuery.post(home, { "action": "runDry", "oldVal": oldV, "newVal": newV }, function(data) {
+	jQuery.post('', { "action": "runDry", "oldVal": oldV, "newVal": newV, "project_id": project_id }, function(data) {
 	    console.log("got something done");
-	    jQuery('#error-messages').text(JSON.stringify(data));
-	});
+	    data = JSON.parse(data);
+	    jQuery('#error-messages').html(JSON.stringify(data, undefined, 4));
+	}, "json");
 	
     });
     
