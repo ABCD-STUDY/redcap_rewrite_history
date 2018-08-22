@@ -238,6 +238,24 @@ class RewriteHistory extends AbstractExternalModule {
 			  'query' => json_encode($query));
 
 
+
+       //
+       // check for piping (in tags)
+       //
+       $query = "SELECT misc FROM redcap_metadata WHERE misc LIKE \"%[".preg_quote($oldVal)."]%\""." AND project_id = ".$project_id;
+       $result = db_query($query);
+       $count = 0;
+       $ar = array();
+       while($row = db_fetch_assoc( $result ) ) {
+          $ar[] = $row['misc'];
+          $count = $count + 1;
+       }
+       $results[] = array('type' => 'Does the oldVar exist in any piping (tags/misc)?',
+                          'redcap_metadata' => $count,
+			  'values' => implode(",", $ar),
+			  'query' => json_encode($query));
+
+
        echo(json_encode($results));
     }
     
