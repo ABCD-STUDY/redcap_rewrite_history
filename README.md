@@ -11,4 +11,4 @@ We cover the following REDCap elements:
 
 TODO:
 - edit the snapshots of instruments
-- complex piping with :value, :checked, :unchecked, (code) needs better regular expression. These items can be chained!
+- complex piping with :value, :checked, :unchecked, (code) can be chained!
