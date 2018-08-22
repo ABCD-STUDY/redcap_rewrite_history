@@ -188,6 +188,20 @@ class RewriteHistory extends AbstractExternalModule {
 			  'query' => json_encode($query));       
 
 
+       //
+       // check the reports for any changes on this variable REGEXP version (MySQL > 5.6
+       //
+       $query = "SELECT field_name FROM redcap_reports_fields WHERE field_name REGEXP \"^".preg_quote($oldVal)."$\"";
+       $result = db_query($query);
+       $count = 0;
+       while($row = db_fetch_assoc( $result ) ) {
+          $count = $count + 1;
+       }
+       $results[] = array('type' => 'Does the oldVar exist in any reports (field_name)?',
+                          'redcap_metadata' => $count,
+			  'query' => json_encode($query));       
+
+
        echo(json_encode($results));
     }
     
