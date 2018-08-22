@@ -18,19 +18,13 @@ class RewriteHistory extends AbstractExternalModule {
         <link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.6-rc.0/css/select2.min.css" rel="stylesheet" />
         <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.6-rc.0/js/select2.min.js"></script>
         <script src="<?= $this->getUrl("/js/rewriteHistory.js") ?>"></script>
-	
+        
 <?php
 
         $restrictedAccess = ($_REQUEST['page'] == 'executiveView' && (in_array(USERID, $this->getSystemSetting("executive-users")) || SUPER_USER) ? 1 : 0);
-	// do we have to set title here?
         $title = "Rewrite History";
-	//$pathparts = explode("/", $this->getModulePath());
-	//array_pop($pathparts);
-	//$path = array_pop($pathparts);
-	// I need this:
-	//    http://localhost/redcap_v8.7.1/ExternalModules/?prefix=rewrite_history&page=index
 
-	echo("<script> home = \"".$this->getUrl("/index.php")."\"; </script>");
+        echo("<script> home = \"".$this->getUrl("/index.php")."\"; </script>");
 ?>
 
 
@@ -40,16 +34,16 @@ class RewriteHistory extends AbstractExternalModule {
   <div class="form-group">
     <label for="oldname">Project List</label>
     <select id="project-list" class="form-control">
-	 <option></option>
+         <option></option>
 
 <?php
-	// get list of projects
-	// do a sql query
-	$query = "SELECT project_id,app_title,project_name FROM redcap_projects";
+        // get list of projects
+        // do a sql query
+        $query = "SELECT project_id,app_title,project_name FROM redcap_projects";
         $result = db_query($query);
-	while ($row = db_fetch_assoc( $result ) ) {
-	   echo("<option value='" . $row['project_id'] . "'>" . $row['app_title'] . "</option>");
-	}
+        while ($row = db_fetch_assoc( $result ) ) {
+           echo("<option value='" . $row['project_id'] . "'>" . $row['app_title'] . "</option>");
+        }
 ?>
 
     </select>
@@ -81,6 +75,11 @@ class RewriteHistory extends AbstractExternalModule {
 <?php
     }
 
+    // match a REDCap piping reference as [<string>] or [<string>:value] or [<string>:checked] or [<string>:unchecked]
+    public function pipingRegExp( $str ) {
+       return "\\\[".preg_quote($str)."(\\\:value|\\\:checked|\\\:unchecked)?\\\]";
+    }
+
     public function dryRun($oldVal, $newVal, $project_id) {
 
        $results = array();
@@ -98,8 +97,8 @@ class RewriteHistory extends AbstractExternalModule {
        }
        $results[] = array('type' => 'Does data exist for this item (field_name in redcap_data)?',
                           'redcap_data' => $count,
-			  'values' => implode(",", $ar),
-			  'query' => json_encode($query));
+                          'values' => implode(",", $ar),
+                          'query' => json_encode($query));
 
        //
        // check the data dictionary       
@@ -114,8 +113,8 @@ class RewriteHistory extends AbstractExternalModule {
        }
        $results[] = array('type' => 'Does the oldVar exist in data dictionary?',
                           'redcap_metadata' => $count,
-			  'values' => implode(",", $ar),
-			  'query' => json_encode($query));
+                          'values' => implode(",", $ar),
+                          'query' => json_encode($query));
 
 
        //
@@ -131,8 +130,8 @@ class RewriteHistory extends AbstractExternalModule {
        }
        $results[] = array('type' => 'Does the newVar exist in data dictionary (field_name)?',
                           'redcap_metadata' => $count,
-			  'values' => implode(",", $ar),
-			  'query' => json_encode($query));
+                          'values' => implode(",", $ar),
+                          'query' => json_encode($query));
 
 
        //
@@ -148,8 +147,8 @@ class RewriteHistory extends AbstractExternalModule {
        }
        $results[] = array('type' => 'Does the newVar exist in any branching logic (branching_logic)?',
                           'redcap_metadata' => $count,
-			  'variables' => implode(",",$ar),
-			  'query' => json_encode($query));       
+                          'variables' => implode(",",$ar),
+                          'query' => json_encode($query));       
 
 
 
@@ -166,8 +165,8 @@ class RewriteHistory extends AbstractExternalModule {
        }
        $results[] = array('type' => 'Does the newVar exist in the log (sql_log)?',
                           'redcap_metadata' => $count,
-			  'values' => implode(",", $ar),
-			  'query' => json_encode($query));       
+                          'values' => implode(",", $ar),
+                          'query' => json_encode($query));       
 
 
        //
@@ -183,8 +182,8 @@ class RewriteHistory extends AbstractExternalModule {
        }
        $results[] = array('type' => 'Does the newVar exist in the log (data_values, regexp)?',
                           'redcap_metadata' => $count,
-			  'values' => implode(",", $ar),
-			  'query' => json_encode($query));       
+                          'values' => implode(",", $ar),
+                          'query' => json_encode($query));       
 
 
        //
@@ -200,14 +199,14 @@ class RewriteHistory extends AbstractExternalModule {
        }
        $results[] = array('type' => 'Does the oldVar exist in any reports (field_name)?',
                           'redcap_metadata' => $count,
-			  'values' => implode(",", $ar),
-			  'query' => json_encode($query));       
+                          'values' => implode(",", $ar),
+                          'query' => json_encode($query));       
 
        //
        // check for piping (in element descriptions)
        // TODO: there references can contain appended ':value', ':checked', ':unchecked', 
        //
-       $query = "SELECT element_label FROM redcap_metadata WHERE element_label LIKE \"%[".preg_quote($oldVal)."]%\""." AND project_id = ".$project_id;
+       $query = "SELECT element_label FROM redcap_metadata WHERE element_label REGEXP \"".self::pipingRegExp($oldVal)."\" AND project_id = ".$project_id;
        $result = db_query($query);
        $count = 0;
        $ar = array();
@@ -217,32 +216,32 @@ class RewriteHistory extends AbstractExternalModule {
        }
        $results[] = array('type' => 'Does the oldVar exist in any piping (element_label)?',
                           'redcap_metadata' => $count,
-			  'values' => implode(",", $ar),
-			  'query' => json_encode($query));
+                          'values' => implode(",", $ar),
+                          'query' => json_encode($query));
 
 
        //
        // check for piping (in element note)
        //
-       $query = "SELECT element_note FROM redcap_metadata WHERE element_note LIKE \"%[".preg_quote($oldVal)."]%\""." AND project_id = ".$project_id;
+       $query = "SELECT element_note FROM redcap_metadata WHERE element_note REGEXP \"".self::pipingRegExp($oldVal)."\" AND project_id = ".$project_id;
        $result = db_query($query);
        $count = 0;
        $ar = array();
        while($row = db_fetch_assoc( $result ) ) {
-          $ar[] = $row['element_label'];
+          $ar[] = $row['element_note'];
           $count = $count + 1;
        }
        $results[] = array('type' => 'Does the oldVar exist in any piping (element_note)?',
                           'redcap_metadata' => $count,
-			  'values' => implode(",", $ar),
-			  'query' => json_encode($query));
+                          'values' => implode(",", $ar),
+                          'query' => json_encode($query));
 
 
 
        //
        // check for piping (in tags)
        //
-       $query = "SELECT misc FROM redcap_metadata WHERE misc LIKE \"%[".preg_quote($oldVal)."]%\""." AND project_id = ".$project_id;
+       $query = "SELECT misc FROM redcap_metadata WHERE misc REGEXP \"".self::pipingRegExp($oldVal)."\" AND project_id = ".$project_id;
        $result = db_query($query);
        $count = 0;
        $ar = array();
@@ -252,8 +251,8 @@ class RewriteHistory extends AbstractExternalModule {
        }
        $results[] = array('type' => 'Does the oldVar exist in any piping (tags/misc)?',
                           'redcap_metadata' => $count,
-			  'values' => implode(",", $ar),
-			  'query' => json_encode($query));
+                          'values' => implode(",", $ar),
+                          'query' => json_encode($query));
 
 
        echo(json_encode($results));
