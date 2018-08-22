@@ -91,11 +91,14 @@ class RewriteHistory extends AbstractExternalModule {
        $query = "SELECT field_name FROM redcap_data WHERE field_name = '".prep($oldVal)."'";
        $result = db_query($query);
        $count = 0;
+       $ar = array();
        while($row = db_fetch_assoc( $result ) ) {
+          $ar[] = $row['field_name'];
           $count = $count + 1;
        }
        $results[] = array('type' => 'Does data exist for this item (field_name in redcap_data)?',
                           'redcap_data' => $count,
+			  'values' => implode(",", $ar),
 			  'query' => json_encode($query));
 
        //
@@ -104,11 +107,14 @@ class RewriteHistory extends AbstractExternalModule {
        $query = "SELECT field_name FROM redcap_metadata WHERE field_name = '".prep($oldVal)."' AND project_id = ".$project_id;
        $result = db_query($query);
        $count = 0;
+       $ar = array();
        while($row = db_fetch_assoc( $result ) ) {
+          $ar[] = $row['field_name'];
           $count = $count + 1;
        }
        $results[] = array('type' => 'Does the oldVar exist in data dictionary?',
                           'redcap_metadata' => $count,
+			  'values' => implode(",", $ar),
 			  'query' => json_encode($query));
 
 
@@ -118,11 +124,14 @@ class RewriteHistory extends AbstractExternalModule {
        $query = "SELECT field_name FROM redcap_metadata WHERE field_name = '".prep($newVal)."' AND project_id = ".$project_id;
        $result = db_query($query);
        $count = 0;
+       $ar = array();
        while($row = db_fetch_assoc( $result ) ) {
+          $ar[] = $row['field_name'];
           $count = $count + 1;
        }
        $results[] = array('type' => 'Does the newVar exist in data dictionary (field_name)?',
                           'redcap_metadata' => $count,
+			  'values' => implode(",", $ar),
 			  'query' => json_encode($query));
 
 
@@ -147,59 +156,86 @@ class RewriteHistory extends AbstractExternalModule {
        //
        // check the logs for any changes on this variable
        //
-       $query = "SELECT sql_log FROM redcap_log_event WHERE sql_log LIKE '%".prep($oldVal)."%' AND project_id = ".$project_id;
+       $query = "SELECT sql_log FROM redcap_log_event WHERE sql_log LIKE '%\\'".preg_quote($oldVal)."\\'%' AND project_id = ".$project_id;
        $result = db_query($query);
        $count = 0;
+       $ar = array();
        while($row = db_fetch_assoc( $result ) ) {
+          $ar[] = $row['sql_log'];
           $count = $count + 1;
        }
        $results[] = array('type' => 'Does the newVar exist in the log (sql_log)?',
                           'redcap_metadata' => $count,
+			  'values' => implode(",", $ar),
 			  'query' => json_encode($query));       
 
 
-
        //
-       // check the logs for any changes on this variable
+       // check the logs for any changes on this variable REGEXP version (MySQL > 5.6)
        //
-       /*
-       $query = "SELECT data_values FROM redcap_log_event WHERE data_values LIKE '%".prep($oldVal)."%' AND project_id = ".$project_id;
+       $query = "SELECT data_values FROM redcap_log_event WHERE data_values REGEXP \"".preg_quote($oldVal)." ="."\""." AND project_id = ".$project_id;
        $result = db_query($query);
        $count = 0;
+       $ar = array();
        while($row = db_fetch_assoc( $result ) ) {
-          $count = $count + 1;
-       }
-       $results[] = array('type' => 'Does the newVar exist in the log (data_values)?',
-                          'redcap_metadata' => $count,
-			  'query' => json_encode($query));       
-       */
-
-       //
-       // check the logs for any changes on this variable REGEXP version (MySQL > 5.6
-       //
-       $query = "SELECT data_values FROM redcap_log_event WHERE data_values REGEXP \"".preg_quote($oldVal)." ="."\" AND project_id = ".$project_id;
-       $result = db_query($query);
-       $count = 0;
-       while($row = db_fetch_assoc( $result ) ) {
+          $ar[] = $row['data_values'];
           $count = $count + 1;
        }
        $results[] = array('type' => 'Does the newVar exist in the log (data_values, regexp)?',
                           'redcap_metadata' => $count,
+			  'values' => implode(",", $ar),
 			  'query' => json_encode($query));       
 
 
        //
-       // check the reports for any changes on this variable REGEXP version (MySQL > 5.6
+       // check the reports for any changes on this variable REGEXP version (MySQL > 5.6)
        //
        $query = "SELECT field_name FROM redcap_reports_fields WHERE field_name REGEXP \"^".preg_quote($oldVal)."$\"";
        $result = db_query($query);
        $count = 0;
+       $ar = array();
        while($row = db_fetch_assoc( $result ) ) {
+          $ar[] = $row['field_name'];
           $count = $count + 1;
        }
        $results[] = array('type' => 'Does the oldVar exist in any reports (field_name)?',
                           'redcap_metadata' => $count,
+			  'values' => implode(",", $ar),
 			  'query' => json_encode($query));       
+
+       //
+       // check for piping (in element descriptions)
+       // TODO: there references can contain appended ':value', ':checked', ':unchecked', 
+       //
+       $query = "SELECT element_label FROM redcap_metadata WHERE element_label LIKE \"%[".preg_quote($oldVal)."]%\""." AND project_id = ".$project_id;
+       $result = db_query($query);
+       $count = 0;
+       $ar = array();
+       while($row = db_fetch_assoc( $result ) ) {
+          $ar[] = $row['element_label'];
+          $count = $count + 1;
+       }
+       $results[] = array('type' => 'Does the oldVar exist in any piping (element_label)?',
+                          'redcap_metadata' => $count,
+			  'values' => implode(",", $ar),
+			  'query' => json_encode($query));
+
+
+       //
+       // check for piping (in element note)
+       //
+       $query = "SELECT element_note FROM redcap_metadata WHERE element_note LIKE \"%[".preg_quote($oldVal)."]%\""." AND project_id = ".$project_id;
+       $result = db_query($query);
+       $count = 0;
+       $ar = array();
+       while($row = db_fetch_assoc( $result ) ) {
+          $ar[] = $row['element_label'];
+          $count = $count + 1;
+       }
+       $results[] = array('type' => 'Does the oldVar exist in any piping (element_note)?',
+                          'redcap_metadata' => $count,
+			  'values' => implode(",", $ar),
+			  'query' => json_encode($query));
 
 
        echo(json_encode($results));
