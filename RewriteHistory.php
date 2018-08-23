@@ -77,8 +77,14 @@ class RewriteHistory extends AbstractExternalModule {
 
     // match a REDCap piping reference as [<string>] or [<string>:value] or [<string>:checked] or [<string>:unchecked]
     // or [<string>[:value|:checked|:unchecked]]
+    //   [SQL]
     public function pipingRegExp( $str ) {
        return "\\\[".preg_quote($str)."(\\\:value|\\\:checked|\\\:unchecked)*\\\]";
+    }
+
+    // replace variable name in piping structure like [a] or [a:value] or [a:value:checked:unchecked]
+    public function replacePiping( $oldVal, $newVal, $v) {
+       return preg_replace('/\['.preg_quote($oldVal).'(:value|:checked|:unchecked)?(:value|:checked|:unchecked)?(:value|:checked|:unchecked)?\]/', '['.$newVal.'$1$2$3]', $v);
     }
 
     public function dryRun($oldVal, $newVal, $project_id) {
@@ -97,7 +103,7 @@ class RewriteHistory extends AbstractExternalModule {
           $ar[] = array( "old" => $row['field_name'], "new" => $newVal );
           $count = $count + 1;
        }
-       $results[] = array('type' => 'Does data exist for this item (field_name in redcap_data)?',
+       $results[] = array('type' => 'Does data exist for this item (field_name in redcap_data for different records)?',
                           'redcap_data' => $count,
                           'values' => $ar,
                           'query' => json_encode($query));
@@ -146,10 +152,7 @@ class RewriteHistory extends AbstractExternalModule {
        while($row = db_fetch_assoc( $result ) ) {
           // ok, this is more complex. We need to replace the LIKE entry in the branching_logic column
           // this needs to work even if the item name is part of another item name (leading/trailing stuff)
-          $v = $row['branching_logic'];
-          // here it is, should capture the piping structure with repeated qualifiers
-          // Question: is this working if there are more than one of these pattern in the same string?
-          $nv = preg_replace('/\['.preg_quote($oldVal).'(:value|:checked|:unchecked)?(:value|:checked|:unchecked)?(:value|:checked|:unchecked)?\]/', '['.$newVal.'$1$2$3]', $v);
+          $nv = self::replacePiping( $oldVal, $newVal, $row['branching_logic']);
 
           $ar[] = array( "old" => $row['branching_logic'], "new" => $nv );
           $count = $count + 1;
@@ -233,8 +236,7 @@ class RewriteHistory extends AbstractExternalModule {
        $count = 0;
        $ar = array();
        while($row = db_fetch_assoc( $result ) ) {
-          $v = $row['element_label'];
-          $nv = preg_replace('/\['.preg_quote($oldVal).'(:value|:checked|:unchecked)?(:value|:checked|:unchecked)?(:value|:checked|:unchecked)?\]/', '['.$newVal.'$1$2$3]', $v);
+          $nv = self::replacePiping( $oldVal, $newVal, $row['element_label']);
 
           $ar[] = array( "old" => $row['element_label'], "new" => $nv );
           $count = $count + 1;
@@ -253,8 +255,7 @@ class RewriteHistory extends AbstractExternalModule {
        $count = 0;
        $ar = array();
        while($row = db_fetch_assoc( $result ) ) {
-          $v = $row['element_note'];
-          $nv = preg_replace('/\['.preg_quote($oldVal).'(:value|:checked|:unchecked)?(:value|:checked|:unchecked)?(:value|:checked|:unchecked)?\]/', '['.$newVal.'$1$2$3]', $v);
+          $nv = self::replacePiping( $oldVal, $newVal, $row['element_note']);
 
           $ar[] = array( "old" => $row['element_note'], "new" => $nv );
           $count = $count + 1;
@@ -274,8 +275,7 @@ class RewriteHistory extends AbstractExternalModule {
        $count = 0;
        $ar = array();
        while($row = db_fetch_assoc( $result ) ) {
-          $v = $row['misc'];
-          $nv = preg_replace('/\['.preg_quote($oldVal).'(:value|:checked|:unchecked)?(:value|:checked|:unchecked)?(:value|:checked|:unchecked)?\]/', '['.$newVal.'$1$2$3]', $v);
+          $nv = self::replacePiping( $oldVal, $newVal, $row['misc']);
 
           $ar[] = array( "old" => $row['misc'], "new" => $nv );
           $count = $count + 1;
