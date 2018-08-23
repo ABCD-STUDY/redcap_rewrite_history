@@ -149,7 +149,7 @@ class RewriteHistory extends AbstractExternalModule {
           $v = $row['branching_logic'];
           // here it is, should capture the piping structure with repeated qualifiers
           // Question: is this working if there are more than one of these pattern in the same string?
-          $nv = preg_replace('/\['.preg_quote($oldVal).'(:value|:checked|:unchecked)*\]/', '['.$newVal.'\1]', $v);
+          $nv = preg_replace('/\['.preg_quote($oldVal).'(:value|:checked|:unchecked)?(:value|:checked|:unchecked)?(:value|:checked|:unchecked)?\]/', '['.$newVal.'$1$2$3]', $v);
 
           $ar[] = array( "old" => $row['branching_logic'], "new" => $nv );
           $count = $count + 1;
@@ -230,7 +230,7 @@ class RewriteHistory extends AbstractExternalModule {
        $ar = array();
        while($row = db_fetch_assoc( $result ) ) {
           $v = $row['element_label'];
-          $nv = preg_replace('/\['.preg_quote($oldVal).'(:value|:checked|:unchecked)*\]/', '['.$newVal.'\1]', $v);
+          $nv = preg_replace('/\['.preg_quote($oldVal).'(:value|:checked|:unchecked)?(:value|:checked|:unchecked)?(:value|:checked|:unchecked)?\]/', '['.$newVal.'$1$2$3]', $v);
 
           $ar[] = array( "old" => $row['element_label'], "new" => $nv );
           $count = $count + 1;
@@ -250,7 +250,7 @@ class RewriteHistory extends AbstractExternalModule {
        $ar = array();
        while($row = db_fetch_assoc( $result ) ) {
           $v = $row['element_note'];
-          $nv = preg_replace('/\['.preg_quote($oldVal).'(:value|:checked|:unchecked)*\]/', '['.$newVal.'${1}]', $v);
+          $nv = preg_replace('/\['.preg_quote($oldVal).'(:value|:checked|:unchecked)?(:value|:checked|:unchecked)?(:value|:checked|:unchecked)?\]/', '['.$newVal.'$1$2$3]', $v);
 
           $ar[] = array( "old" => $row['element_note'], "new" => $nv );
           $count = $count + 1;
@@ -271,7 +271,7 @@ class RewriteHistory extends AbstractExternalModule {
        $ar = array();
        while($row = db_fetch_assoc( $result ) ) {
           $v = $row['misc'];
-          $nv = preg_replace('/\['.preg_quote($oldVal).'(:value|:checked|:unchecked)*\]/', '['.$newVal.'${1}]', $v);
+          $nv = preg_replace('/\['.preg_quote($oldVal).'(:value|:checked|:unchecked)?(:value|:checked|:unchecked)?(:value|:checked|:unchecked)?\]/', '['.$newVal.'$1$2$3]', $v);
 
           $ar[] = array( "old" => $row['misc'], "new" => $nv );
           $count = $count + 1;

@@ -2,15 +2,15 @@
 
 ### Description
 
-Allow users to rename an item in REDCap including rewriting the history of the item similar to a 'git mv'.
+Allow users to rename an item in a REDCap project including rewriting the history of the item - similar to a 'git mv'.
 
-We currently cover the following REDCap locations that potentially contain references to items:
+We currently search the following REDCap locations for references to the item:
 - instruments (element names, branching logic, tags, notes)
 - reports
 - logs
 
 TODO:
 - update snapshot of instruments
-- complex piping with chained :value, :checked, :unchecked, (code)
+- complex piping with chained (code)
 
 ![Web Interface](/images/snapshot.png "Web Interface")
