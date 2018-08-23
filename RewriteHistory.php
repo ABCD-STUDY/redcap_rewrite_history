@@ -76,6 +76,7 @@ class RewriteHistory extends AbstractExternalModule {
     }
 
     // match a REDCap piping reference as [<string>] or [<string>:value] or [<string>:checked] or [<string>:unchecked]
+    // or [<string>[:value|:checked|:unchecked]]
     public function pipingRegExp( $str ) {
        return "\\\[".preg_quote($str)."(\\\:value|\\\:checked|\\\:unchecked)*\\\]";
     }
@@ -144,16 +145,16 @@ class RewriteHistory extends AbstractExternalModule {
        $ar = array();
        while($row = db_fetch_assoc( $result ) ) {
           // ok, this is more complex. We need to replace the LIKE entry in the branching_logic column
-	  // this needs to work even if the item name is part of another item name (leading/trailing stuff)
-	  $v = $row['branching_logic'];
-	  // here it is, should capture the piping structure with repeated qualifiers
-	  // Question: is this working if there are more than one of these pattern in the same string?
-	  $nv = preg_replace('/\['.preg_quote($oldVal).'(\\\:value|\\\:checked|\\\:unchecked)*\]/', '['.$newVal.'${1}]', $v);
+          // this needs to work even if the item name is part of another item name (leading/trailing stuff)
+          $v = $row['branching_logic'];
+          // here it is, should capture the piping structure with repeated qualifiers
+          // Question: is this working if there are more than one of these pattern in the same string?
+          $nv = preg_replace('/\['.preg_quote($oldVal).'(:value|:checked|:unchecked)*\]/', '['.$newVal.'\1]', $v);
 
           $ar[] = array( "old" => $row['branching_logic'], "new" => $nv );
           $count = $count + 1;
        }
-       $results[] = array('type' => 'Does the newVar exist in any branching logic (branching_logic)?',
+       $results[] = array('type' => 'Does the oldVar exist in any branching logic (branching_logic)?',
                           'redcap_metadata' => $count,
                           'values' => $ar,
                           'query' => json_encode($query));       
@@ -168,13 +169,13 @@ class RewriteHistory extends AbstractExternalModule {
        $count  = 0;
        $ar = array();
        while($row = db_fetch_assoc( $result ) ) {
-	  $v  = $row['sql_log'];
-	  $nv = preg_replace('/\''.preg_quote($oldVal).'\'/', '\''.$newVal.'\'', $v);
+          $v  = $row['sql_log'];
+          $nv = preg_replace('/\''.preg_quote($oldVal).'\'/', '\''.$newVal.'\'', $v);
 
           $ar[]  = array( "old" => $row['sql_log'], "new" => $nv );
           $count = $count + 1;
        }
-       $results[] = array('type' => 'Does the newVar exist in the log (sql_log)?',
+       $results[] = array('type' => 'Does the oldVar exist in the log (sql_log)?',
                           'redcap_metadata' => $count,
                           'values' => $ar,
                           'query' => json_encode($query));       
@@ -188,13 +189,13 @@ class RewriteHistory extends AbstractExternalModule {
        $count = 0;
        $ar = array();
        while($row = db_fetch_assoc( $result ) ) {
-	  $v  = $row['data_values'];
-	  $nv = preg_replace('/^'.preg_quote($oldVal).' = /', $newVal.' = ', $v);
+          $v  = $row['data_values'];
+          $nv = preg_replace('/^'.preg_quote($oldVal).' = /', $newVal.' = ', $v);
        
           $ar[] = array( "old" => $row['data_values'], "new" => $nv );
           $count = $count + 1;
        }
-       $results[] = array('type' => 'Does the newVar exist in the log (data_values, regexp)?',
+       $results[] = array('type' => 'Does the oldVar exist in the log (data_values, regexp)?',
                           'redcap_metadata' => $count,
                           'values' => $ar,
                           'query' => json_encode($query));       
@@ -208,10 +209,10 @@ class RewriteHistory extends AbstractExternalModule {
        $count  = 0;
        $ar = array();
        while($row = db_fetch_assoc( $result ) ) {
-	  $v  = $row['field_name'];
-	  $nv = preg_replace('/^'.preg_quote($oldVal).'$/', $newVal, $v);
+          $v  = $row['field_name'];
+          $nv = preg_replace('/^'.preg_quote($oldVal).'$/', $newVal, $v);
 
-	  $ar[] = array( "old" => $row['field_name'], "new" => $nv );
+          $ar[] = array( "old" => $row['field_name'], "new" => $nv );
           $count = $count + 1;
        }
        $results[] = array('type' => 'Does the oldVar exist in any reports (field_name)?',
@@ -228,8 +229,8 @@ class RewriteHistory extends AbstractExternalModule {
        $count = 0;
        $ar = array();
        while($row = db_fetch_assoc( $result ) ) {
-	  $v = $row['element_label'];
-	  $nv = preg_replace('/\['.preg_quote($oldVal).'(\\\:value|\\\:checked|\\\:unchecked)*\]/', '['.$newVal.'\1]', $v);
+          $v = $row['element_label'];
+          $nv = preg_replace('/\['.preg_quote($oldVal).'(:value|:checked|:unchecked)*\]/', '['.$newVal.'\1]', $v);
 
           $ar[] = array( "old" => $row['element_label'], "new" => $nv );
           $count = $count + 1;
@@ -248,10 +249,10 @@ class RewriteHistory extends AbstractExternalModule {
        $count = 0;
        $ar = array();
        while($row = db_fetch_assoc( $result ) ) {
-	  $v = $row['element_note'];
-	  $nv = preg_replace('/\['.preg_quote($oldVal).'(\\\:value|\\\:checked|\\\:unchecked)*\]/', '['.$newVal.'${1}]', $v);
+          $v = $row['element_note'];
+          $nv = preg_replace('/\['.preg_quote($oldVal).'(:value|:checked|:unchecked)*\]/', '['.$newVal.'${1}]', $v);
 
-	  $ar[] = array( "old" => $row['element_note'], "new" => $nv );
+          $ar[] = array( "old" => $row['element_note'], "new" => $nv );
           $count = $count + 1;
        }
        $results[] = array('type' => 'Does the oldVar exist in any piping (element_note)?',
@@ -269,10 +270,10 @@ class RewriteHistory extends AbstractExternalModule {
        $count = 0;
        $ar = array();
        while($row = db_fetch_assoc( $result ) ) {
-	  $v = $row['misc'];
-	  $nv = preg_replace('/\['.preg_quote($oldVal).'(\\\:value|\\\:checked|\\\:unchecked)*\]/', '['.$newVal.'${1}]', $v);
+          $v = $row['misc'];
+          $nv = preg_replace('/\['.preg_quote($oldVal).'(:value|:checked|:unchecked)*\]/', '['.$newVal.'${1}]', $v);
 
-	  $ar[] = array( "old" => $row['misc'], "new" => $nv );
+          $ar[] = array( "old" => $row['misc'], "new" => $nv );
           $count = $count + 1;
        }
        $results[] = array('type' => 'Does the oldVar exist in any piping (tags/misc)?',
