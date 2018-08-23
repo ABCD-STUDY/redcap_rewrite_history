@@ -47,7 +47,11 @@ jQuery(document).ready(function () {
             return;
         }
         project_id = jQuery('#project-list').val();
-        
+        if (project_id == "") {
+            alert('Error: no project specified');
+            return;
+        }
+
         // can I call now php again?
         jQuery.post('', { "action": "runDry", "oldVal": oldV, "newVal": newV, "project_id": project_id }, function(data) {
             console.log("got something done");
