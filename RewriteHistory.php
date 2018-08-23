@@ -202,18 +202,22 @@ class RewriteHistory extends AbstractExternalModule {
 
 
        //
-       // check the reports for any changes on this variable REGEXP version (MySQL > 5.6)
-       //
-       $query  = "SELECT field_name FROM redcap_reports_fields WHERE field_name REGEXP \"^".preg_quote($oldVal)."$\"";
+       // check the reports for any changes on this variable
+       //       
+       $query  = "SELECT report_id,project_id FROM redcap_reports WHERE project_id = ".$project_id;
        $result = db_query($query);
        $count  = 0;
        $ar = array();
        while($row = db_fetch_assoc( $result ) ) {
-          $v  = $row['field_name'];
-          $nv = preg_replace('/^'.preg_quote($oldVal).'$/', $newVal, $v);
+         $query2  = "SELECT field_name FROM redcap_reports_fields WHERE field_name REGEXP \"^".preg_quote($oldVal)."$\" AND report_id = ".$row['report_id'];
+         $result2 = db_query($query2);
+         while($row2 = db_fetch_assoc( $result2 ) ) {
+           $v  = $row2['field_name'];
+           $nv = preg_replace('/^'.preg_quote($oldVal).'$/', $newVal, $v);
 
-          $ar[] = array( "old" => $row['field_name'], "new" => $nv );
-          $count = $count + 1;
+           $ar[] = array( "old" => $row2['field_name'], "new" => $nv );
+           $count = $count + 1;
+         }
        }
        $results[] = array('type' => 'Does the oldVar exist in any reports (field_name)?',
                           'redcap_metadata' => $count,
