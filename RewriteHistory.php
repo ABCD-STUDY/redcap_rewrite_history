@@ -224,7 +224,7 @@ class RewriteHistory extends AbstractExternalModule {
            $count = $count + 1;
          }
        }
-       $results[] = array('type' => 'Does the oldVar exist in any reports (field_name)?',
+       $results[] = array('type' => 'Does the oldVar exist in any redcap_reports_fields (field_name)?',
                           'redcap_metadata' => $count,
                           'values' => $ar,
                           'query' => json_encode($query));       
@@ -405,7 +405,27 @@ class RewriteHistory extends AbstractExternalModule {
                           'values' => $ar,
                           'query' => json_encode($query));
 
+
        
+       //
+       // check for piping (in element note)
+       //
+       $query = "SELECT element_note FROM redcap_metadata_archive WHERE element_note REGEXP \"".self::pipingRegExp($oldVal)."\" AND project_id = ".$project_id;
+       $result = db_query($query);
+       $count = 0;
+       $ar = array();
+       while($row = db_fetch_assoc( $result ) ) {
+          $nv = self::replacePiping( $oldVal, $newVal, $row['element_note']);
+
+          $ar[] = array( "old" => $row['element_note'], "new" => $nv );
+          $count = $count + 1;
+       }
+       $results[] = array('type' => 'Does the oldVar exist in any piping (element_note)?',
+                          'redcap_metadata' => $count,
+                          'values' => $ar,
+                          'query' => json_encode($query));
+
+
        
        // return the results if dryrun was called from website
        echo(json_encode($results));
