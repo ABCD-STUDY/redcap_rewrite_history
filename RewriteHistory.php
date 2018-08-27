@@ -38,7 +38,7 @@ class RewriteHistory extends AbstractExternalModule {
 
 <?php
         // get list of projects
-        // do a sql query
+        // do a sql query (is there a better way using REDCap::?)
         $query = "SELECT project_id,app_title,project_name FROM redcap_projects";
         $result = db_query($query);
         while ($row = db_fetch_assoc( $result ) ) {
@@ -87,6 +87,8 @@ class RewriteHistory extends AbstractExternalModule {
        return preg_replace('/\['.preg_quote($oldVal).'(:value|:checked|:unchecked)?(:value|:checked|:unchecked)?(:value|:checked|:unchecked)?\]/', '['.$newVal.'$1$2$3]', $v);
     }
 
+    // During a dry run no actual changes are performed, instead a list of suggested changes towards the database
+    // is generated (shown in the textfield).
     public function dryRun($oldVal, $newVal, $project_id) {
 
        $results = array();
@@ -98,7 +100,9 @@ class RewriteHistory extends AbstractExternalModule {
        $result = db_query($query);
        $count  = 0;
        $ar = array();
+       $posar = array();
        while($row = db_fetch_assoc( $result ) ) {
+           $posar[] = $result->current_field;
           // trivial replace
           $ar[] = array( "old" => $row['field_name'], "new" => $newVal );
           $count = $count + 1;
@@ -106,6 +110,7 @@ class RewriteHistory extends AbstractExternalModule {
        $results[] = array('type' => 'Does data exist for this item (field_name in redcap_data for different records)?',
                           'redcap_data' => $count,
                           'values' => $ar,
+                          'pos' => $posar,
                           'query' => json_encode($query));
 
        //
@@ -172,8 +177,7 @@ class RewriteHistory extends AbstractExternalModule {
        $count  = 0;
        $ar = array();
        while($row = db_fetch_assoc( $result ) ) {
-          $v  = $row['sql_log'];
-          $nv = preg_replace('/\''.preg_quote($oldVal).'\'/', '\''.$newVal.'\'', $v);
+          $nv = preg_replace('/\''.preg_quote($oldVal).'\'/', '\''.$newVal.'\'', $row['sql_log']);
 
           $ar[]  = array( "old" => $row['sql_log'], "new" => $nv );
           $count = $count + 1;
@@ -192,8 +196,7 @@ class RewriteHistory extends AbstractExternalModule {
        $count = 0;
        $ar = array();
        while($row = db_fetch_assoc( $result ) ) {
-          $v  = $row['data_values'];
-          $nv = preg_replace('/^'.preg_quote($oldVal).' = /', $newVal.' = ', $v);
+          $nv = preg_replace('/^'.preg_quote($oldVal).' = /', $newVal.' = ', $row['data_values']);
        
           $ar[] = array( "old" => $row['data_values'], "new" => $nv );
           $count = $count + 1;
@@ -215,8 +218,7 @@ class RewriteHistory extends AbstractExternalModule {
          $query2  = "SELECT field_name FROM redcap_reports_fields WHERE field_name REGEXP \"^".preg_quote($oldVal)."$\" AND report_id = ".$row['report_id'];
          $result2 = db_query($query2);
          while($row2 = db_fetch_assoc( $result2 ) ) {
-           $v  = $row2['field_name'];
-           $nv = preg_replace('/^'.preg_quote($oldVal).'$/', $newVal, $v);
+           $nv = preg_replace('/^'.preg_quote($oldVal).'$/', $newVal, $row2['field_name']);
 
            $ar[] = array( "old" => $row2['field_name'], "new" => $nv );
            $count = $count + 1;
@@ -286,13 +288,133 @@ class RewriteHistory extends AbstractExternalModule {
                           'query' => json_encode($query));
 
 
+       //
+       // check for log events
+       //
+       $query = "SELECT data_values FROM redcap_log_event WHERE data_values REGEXP \"\\'".preg_quote($oldVal)."\\'\" AND project_id = ".$project_id;
+       $result = db_query($query);
+       $count = 0;
+       $ar = array();
+       while($row = db_fetch_assoc( $result ) ) {
+           // $nv = self::replacePiping( $oldVal, $newVal, $row['data_values']);
+          $nv = preg_replace('/\''.preg_quote($oldVal).'\'/', '\''.$newVal.'\'', $row['data_values']);
+
+          $ar[] = array( "old" => $row['data_values'], "new" => $nv );
+          $count = $count + 1;
+       }
+       $results[] = array('type' => 'Does the oldVar exist in any log events (data_values)?',
+                          'redcap_metadata' => $count,
+                          'values' => $ar,
+                          'query' => json_encode($query));
+
+
+       //
+       // check for log events
+       //
+       $query = "SELECT pk FROM redcap_log_event WHERE pk = \"".preg_quote($oldVal)."\" AND project_id = ".$project_id;
+       $result = db_query($query);
+       $count = 0;
+       $ar = array();
+       while($row = db_fetch_assoc( $result ) ) {
+           //$nv = self::replacePiping( $oldVal, $newVal, $row['pk']);
+          $nv = preg_replace('/'.preg_quote($oldVal).'/', $newVal, $row['pk']);
+
+          $ar[] = array( "old" => $row['pk'], "new" => $nv );
+          $count = $count + 1;
+       }
+       $results[] = array('type' => 'Does the oldVar exist in any log events (pk)?',
+                          'redcap_metadata' => $count,
+                          'values' => $ar,
+                          'query' => json_encode($query));
+
+       //
+       // check for log views
+       //
+       $query = "SELECT miscellaneous FROM redcap_log_view WHERE miscellaneous REGEXP \"\\'".preg_quote($oldVal)."\\'\" AND project_id = ".$project_id;
+       $result = db_query($query);
+       $count = 0;
+       $ar = array();
+       while($row = db_fetch_assoc( $result ) ) {
+           //$v = self::replacePiping( $oldVal, $newVal, $row['miscellaneous']);
+          $nv = preg_replace('/\''.preg_quote($oldVal).'\'/', '\''.$newVal.'\'', $row['miscellaneous']);
+
+          $ar[] = array( "old" => $row['miscellaneous'], "new" => $nv );
+          $count = $count + 1;
+       }
+       $results[] = array('type' => 'Does the oldVar exist in any log event view (miscellaneous)?',
+                          'redcap_metadata' => $count,
+                          'values' => $ar,
+                          'query' => json_encode($query));
+
+       
+       //
+       // check for redcap_metadata_archive
+       //
+       $query = "SELECT field_name FROM redcap_metadata_archive WHERE field_name = \"".preg_quote($oldVal)."\" AND project_id = ".$project_id;
+       $result = db_query($query);
+       $count = 0;
+       $ar = array();
+       while($row = db_fetch_assoc( $result ) ) {
+           //$v = self::replacePiping( $oldVal, $newVal, $row['miscellaneous']);
+          $nv = preg_replace('/\''.preg_quote($oldVal).'\'/', '\''.$newVal.'\'', $row['field_name']);
+
+          $ar[] = array( "old" => $row['field_name'], "new" => $nv );
+          $count = $count + 1;
+       }
+       $results[] = array('type' => 'Does the oldVar exist in any redcap_metadata_archive (field_name)?',
+                          'redcap_metadata' => $count,
+                          'values' => $ar,
+                          'query' => json_encode($query));
+
+       //
+       // check the branching logic archive (old variable)
+       //
+       $query  = "SELECT branching_logic,field_name FROM redcap_metadata_archive WHERE branching_logic REGEXP \"".self::pipingRegExp($oldVal)."\" AND project_id = ".$project_id;
+       $result = db_query($query);
+       $count  = 0;
+       $ar = array();
+       while($row = db_fetch_assoc( $result ) ) {
+          // ok, this is more complex. We need to replace the LIKE entry in the branching_logic column
+          // this needs to work even if the item name is part of another item name (leading/trailing stuff)
+          $nv = self::replacePiping( $oldVal, $newVal, $row['branching_logic']);
+
+          $ar[] = array( "old" => $row['branching_logic'], "new" => $nv );
+          $count = $count + 1;
+       }
+       $results[] = array('type' => 'Does the oldVar exist in any branching logic archive (branching_logic)?',
+                          'redcap_metadata' => $count,
+                          'values' => $ar,
+                          'query' => json_encode($query));       
+
+
+       //
+       // check for redcap_metadata_archive (in misc)
+       //
+       $query = "SELECT misc FROM redcap_metadata_archive WHERE misc REGEXP \"".self::pipingRegExp($oldVal)."\" AND project_id = ".$project_id;
+       $result = db_query($query);
+       $count = 0;
+       $ar = array();
+       while($row = db_fetch_assoc( $result ) ) {
+          $nv = self::replacePiping( $oldVal, $newVal, $row['misc']);
+
+          $ar[] = array( "old" => $row['misc'], "new" => $nv );
+          $count = $count + 1;
+       }
+       $results[] = array('type' => 'Does the oldVar exist in any piping (tags/misc)?',
+                          'redcap_metadata' => $count,
+                          'values' => $ar,
+                          'query' => json_encode($query));
+
+       
+       
+       // return the results if dryrun was called from website
        echo(json_encode($results));
     }
-    
+
+    // we should use dryrun code to create the list of commands we want to execute against the database
     public function run() {
        echo(json_encode(array('message' => 'hi')));
 
     }
-
 }
 ?>
