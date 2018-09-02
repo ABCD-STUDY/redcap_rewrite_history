@@ -127,7 +127,10 @@ class RewriteHistory extends AbstractExternalModule {
                           'redcap_data' => count($ar),
                           'values' => $ar,
                           'query' => json_encode($query));
+       // perform the update and report
+       // mysql_affected_rows($conn)
 
+       
        //
        // check the data dictionary       
        //
@@ -185,7 +188,7 @@ class RewriteHistory extends AbstractExternalModule {
            $ar[] = $a;
        }
        $results[] = array('type' => 'Does the oldVar exist in the log (sql_log)?',
-                          'redcap_metadata' => count($ar),
+                          'redcap_log_event' => count($ar),
                           'values' => $ar,
                           'query' => json_encode($query));       
 
@@ -193,11 +196,11 @@ class RewriteHistory extends AbstractExternalModule {
        //
        // check the logs for any changes on this variable REGEXP version (MySQL > 5.6)
        //
-       $query = "SELECT data_values FROM redcap_log_event WHERE data_values REGEXP \"^".preg_quote($oldVal)." ="."\""." AND project_id = ".$project_id;
+       $query = "SELECT data_values FROM redcap_log_event WHERE data_values REGEXP '".preg_quote($oldVal)." =' AND project_id = ".$project_id;
        $result = db_query($query);
        $ar = array();
        while($row = db_fetch_assoc( $result ) ) {
-           $nv = preg_replace('/^'.preg_quote($oldVal).' = /', $newVal.' = ', $row['data_values']);
+           $nv = preg_replace('/'.preg_quote($oldVal).' = /', $newVal.' = ', $row['data_values']);
            
            $a = array( "old" => $row['data_values'],
                        "new" => $nv
@@ -206,13 +209,13 @@ class RewriteHistory extends AbstractExternalModule {
            $ar[] = $a;
        }
        $results[] = array('type' => 'Does the oldVar exist in the log (data_values, regexp)?',
-                          'redcap_metadata' => count($ar),
+                          'redcap_log_event' => count($ar),
                           'values' => $ar,
                           'query' => json_encode($query));       
 
 
        //
-       // check the reports for any changes on this variable
+       // check the reports for any changes on this variable (TODO can be made faster)
        //       
        $query  = "SELECT report_id,project_id FROM redcap_reports WHERE project_id = ".$project_id;
        $result = db_query($query);
@@ -231,7 +234,7 @@ class RewriteHistory extends AbstractExternalModule {
          }
        }
        $results[] = array('type' => 'Does the oldVar exist in any redcap_reports_fields (field_name)?',
-                          'redcap_metadata' => count($ar),
+                          'redcap_reports_fields' => count($ar),
                           'values' => $ar,
                           'query' => json_encode($query));       
 
@@ -315,7 +318,7 @@ class RewriteHistory extends AbstractExternalModule {
            $ar[] = $a;
        }
        $results[] = array('type' => 'Does the oldVar exist in any log events (data_values)?',
-                          'redcap_metadata' => count($ar),
+                          'redcap_log_event' => count($ar),
                           'values' => $ar,
                           'query' => json_encode($query));
 
@@ -337,7 +340,7 @@ class RewriteHistory extends AbstractExternalModule {
            $ar[] = $a;
        }
        $results[] = array('type' => 'Does the oldVar exist in any log events (pk)?',
-                          'redcap_metadata' => count($ar),
+                          'redcap_log_event' => count($ar),
                           'values' => $ar,
                           'query' => json_encode($query));
        
@@ -357,7 +360,7 @@ class RewriteHistory extends AbstractExternalModule {
            $ar[] = $a;
        }
        $results[] = array('type' => 'Does the oldVar exist in any log event view (miscellaneous)?',
-                          'redcap_metadata' => count($ar),
+                          'redcap_log_view' => count($ar),
                           'values' => $ar,
                           'query' => json_encode($query));
 
@@ -378,7 +381,7 @@ class RewriteHistory extends AbstractExternalModule {
            $ar[] = $a;
        }
        $results[] = array('type' => 'Does the oldVar exist in any redcap_metadata_archive (field_name)?',
-                          'redcap_metadata' => count($ar),
+                          'redcap_metadata_archive' => count($ar),
                           'values' => $ar,
                           'query' => json_encode($query));
 
@@ -400,7 +403,7 @@ class RewriteHistory extends AbstractExternalModule {
            $ar[] = $a;
        }
        $results[] = array('type' => 'Does the oldVar exist in any branching logic archive (branching_logic)?',
-                          'redcap_metadata' => count($ar),
+                          'redcap_metadata_archieve' => count($ar),
                           'values' => $ar,
                           'query' => json_encode($query));       
 
@@ -421,7 +424,7 @@ class RewriteHistory extends AbstractExternalModule {
            $ar[] = $a;
        }
        $results[] = array('type' => 'Does the oldVar exist in any piping (tags/misc)?',
-                          'redcap_metadata' => count($ar),
+                          'redcap_metadata_archive' => count($ar),
                           'values' => $ar,
                           'query' => json_encode($query));
 
@@ -443,7 +446,7 @@ class RewriteHistory extends AbstractExternalModule {
            $ar[] = $a;
        }
        $results[] = array('type' => 'Does the oldVar exist in any piping (element_note)?',
-                          'redcap_metadata' => count($ar),
+                          'redcap_metadata_archieve' => count($ar),
                           'values' => $ar,
                           'query' => json_encode($query));
 
