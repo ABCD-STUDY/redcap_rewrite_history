@@ -1,8 +1,8 @@
 
 jQuery(document).ready(function () {
 
-    jQuery('#oldname').val('pmq1');
-    jQuery('#newname').val('pmq1_newname');
+    //jQuery('#oldname').val('pmq1');
+    //jQuery('#newname').val('pmq1_newname');
 
     jQuery('#start-rewrite').on('click', function() {
 

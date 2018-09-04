@@ -31,7 +31,7 @@ class RewriteHistory extends AbstractExternalModule {
   <h2><?php echo($title); ?></h2>
         <p>An external module to rename an item in a development or production database. The module attempts to keep the history consistent. This includes data values, log entries, field history, branching logic, survey invitations, data quality rules, and reports.</p>
 
-        <p>The scope of this extension is limited to the REDCap internal database. It cannot change any external modules, hooks, plugins, data entry triggers or scripts that use the API to communicate with REDCap.</p>
+        <p>The scope of this extension is limited to the REDCap internal database. It cannot change any external modules, hooks, plugins, data entry triggers or scripts that use the API to communicate with REDCap. The module changes a number of REDCap data tables directly. It has only been minimally tested with REDCap version 8.7.1.</p>
         
         <p>Warning: This module is really dangerous. Million to one chance it will work. Rewriting history is just asking for trouble. You must be loony to trust whoever wrote this extension - or really desperate. If you really want to go forward from here make sure you can easily get your database back, test your backup - not just in theory, but you have to know that your backups are ok. Have you tried this extension on a copy of your database first? Is your database in maintenance mode - no other users logged in right now? Close your eyes, count slowly to 20, read this text again. Do you still want to go ahead?</p>
 
@@ -68,9 +68,9 @@ class RewriteHistory extends AbstractExternalModule {
 
 <?php if (!$restricedAccess) : ?>
   <div class="form-group">
-     <button id="start-dryrun" class="btn btn-success">Dry run, totally safe</button>&nbsp;
-     <button id="start-rewrite" class="btn btn-danger">Destroy your database</button>
-     &nbsp;<label><input type="checkbox" id="sure"> Are you sure?</label>
+     <button id="start-dryrun" class="btn btn-success" title="A rehearsal of the procedure before the real one">Dry run, totally safe</button>&nbsp;
+     <button id="start-rewrite" class="btn btn-danger" title="Apply the indicated changes to the project">Destroy your database</button>
+     &nbsp;<label><input type="checkbox" id="sure">&nbsp;Are you sure?</label>
   </div>
 <?php endif; ?>
 
