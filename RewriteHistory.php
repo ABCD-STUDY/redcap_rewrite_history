@@ -133,6 +133,21 @@ class RewriteHistory extends AbstractExternalModule {
             echo(json_encode(array('message' => 'Error: the current variable does not exist in this redcap database')));
             return;
         }
+
+
+        $query = sprintf("SELECT field_name FROM redcap_metadata WHERE field_order = '1' AND project_id = %s", $project_id);
+        $result = db_query($query);
+        $ar = array();
+        while ($row = db_fetch_assoc( $result ) ) {
+            $ar[] = $row['field_name'];
+        }
+        if (count($ar) > 0) {
+            if ($ar[0] == $oldVal) {
+                // trying to change the first item in the first instrument
+                echo(json_encode(array('message' => 'Error: You are trying to rename the first item in the first instrument? I don\'t know what would happen....')));
+                return;
+            }
+        }
         
         //
         // check the data dictionary       

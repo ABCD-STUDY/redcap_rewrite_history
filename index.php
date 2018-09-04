@@ -28,10 +28,22 @@ if ( $action == "showPage" ) {
       $project_id = $_POST['project_id'];
    }
    $rewriteHistory = new \ABCD\RewriteHistory\RewriteHistory();
-   $rewriteHistory->dryRun($oldVal, $newVal, $project_id);
+   $rewriteHistory->run($oldVal, $newVal, $project_id, TRUE);
 } else if ( $action == "run" ) {
+   $oldVal = "";
+   if (isset($_POST['oldVal'])) {
+      $oldVal = $_POST['oldVal'];
+   }
+   $newVal = "";
+   if (isset($_POST['newVal'])) {
+      $newVal = $_POST['newVal'];
+   }
+   $project_id = "";
+   if (isset($_POST['project_id'])) {
+      $project_id = $_POST['project_id'];
+   }
    $rewriteHistory = new \ABCD\RewriteHistory\RewriteHistory();
-   $rewriteHistory->run();
+   $rewriteHistory->run($oldVal, $newVal, $project_id, FALSE);
 } else {
    echo("{ \"message\": \"unknown action\" }");
 }
