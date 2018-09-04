@@ -80,12 +80,12 @@ class RewriteHistory extends AbstractExternalModule {
     // or [<string>[:value|:checked|:unchecked]]
     //   [SQL]
     public function pipingRegExp( $str ) {
-        return "\\\[".preg_quote($str)."(\\\:value|\\\:checked|\\\:unchecked)*\\\]";
+        return "\\\[".preg_quote($str)."(\\\:value|\\\:checked|\\\:unchecked|\\\([0-9]*\\\))*\\\]";
     }
     
     // replace variable name in piping structure like [a] or [a:value] or [a:value:checked:unchecked]
     public function replacePiping( $oldVal, $newVal, $v) {
-        return preg_replace('/\['.preg_quote($oldVal).'(:value|:checked|:unchecked)?(:value|:checked|:unchecked)?(:value|:checked|:unchecked)?\]/', '['.$newVal.'$1$2$3]', $v);
+        return preg_replace('/\['.preg_quote($oldVal).'(\([0-9]*\)|:value|:checked|:unchecked)?(:value|:checked|:unchecked)?(:value|:checked|:unchecked)?\]/', '['.$newVal.'$1$2$3]', $v);
     }
     
     // During a dry run no actual changes are performed, instead a list of suggested changes towards the database
@@ -170,7 +170,7 @@ class RewriteHistory extends AbstractExternalModule {
             $a["update"] = sprintf("UPDATE IGNORE redcap_metadata SET branching_logic = '%s' WHERE branching_logic = '%s' AND project_id = %s", $a['new'], $a['old'], $project_id);
             $ar[] = $a;
         }
-        $results[] = array('type' => 'Does the oldVar exist in any branching logic (branching_logic)?',
+        $results[] = array('type' => 'Does the oldVar exist in any branching logic (branching_logic -- )?',
                            'redcap_metadata' => count($ar),
                            'values' => $ar,
                            'query' => json_encode($query));       
