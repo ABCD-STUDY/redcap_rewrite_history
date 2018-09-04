@@ -8,9 +8,10 @@ We currently search the following REDCap locations for references to the item:
 - instruments (element names, branching logic, tags, notes, archives)
 - reports
 - logs
+- data quality rules
 
 TODO:
 - update snapshot of instruments
-- items in review (can remain a 'just do that')
+- items in review (will not fix)
 
 ![Web Interface](/images/snapshot.png "Web Interface")

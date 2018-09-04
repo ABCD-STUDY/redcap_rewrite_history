@@ -29,8 +29,9 @@ class RewriteHistory extends AbstractExternalModule {
 
 
   <h2><?php echo($title); ?></h2>
-        <p>This module is really, <b>really</b> dangerous. Million to one chance it will work. Rewriting history is just asking for trouble. You must be loony to trust whoever wrote this extension - or really desperate. If you really want to go forward from here make sure you can easily get your database back, test your backup - not just in theory, but you have to know that your backups are ok. Have you tried this extension on a copy of your database first? Is your database in maintenance mode - no other users logged in right now? Close your eyes, count slowly to 20, read this text again. Do you still want to go ahead?</p>
-        <p>You are probably reading this after pressing the red button that says "Destroy your database". Its too late now, I told you so!</p>
+        <p>The scope of this module is limited to REDCaps internal database. It cannot change any external modules, hooks, plugins, data entry triggers or scripts that use the API to communicate with REDCap.</p>
+        
+        <p>Warning: This module is really dangerous. Million to one chance it will work. Rewriting history is just asking for trouble. You must be loony to trust whoever wrote this extension - or really desperate. If you really want to go forward from here make sure you can easily get your database back, test your backup - not just in theory, but you have to know that your backups are ok. Have you tried this extension on a copy of your database first? Is your database in maintenance mode - no other users logged in right now? Close your eyes, count slowly to 20, read this text again. Do you still want to go ahead?</p>
 
   <div class="form-group">
     <label for="oldname">Project List</label>
@@ -469,6 +470,27 @@ class RewriteHistory extends AbstractExternalModule {
                            'query' => json_encode($query));
         
         
+        //
+        // check for piping (in data quality rules))
+        //
+        $query = "SELECT rule_logic FROM redcap_data_quality_rules WHERE rule_logic REGEXP \"".self::pipingRegExp($oldVal)."\" AND project_id = ".$project_id;
+        $result = db_query($query);
+        $ar = array();
+        while($row = db_fetch_assoc( $result ) ) {
+            $nv = self::replacePiping( $oldVal, $newVal, $row['element_note']);
+            
+            $a = array( "old" => db_real_escape_string($row['element_note']),
+                        "new" => db_real_escape_string($nv)
+            );
+            $a["update"] = sprintf("UPDATE IGNORE redcap_data_quality_rules SET rule_logic = '%s' WHERE rule_logic = '%s' AND project_id = %s", $a['new'], $a['old'], $project_id);
+            $ar[] = $a;
+        }
+        $results[] = array('type' => 'Does the oldVar exist in any piping of quality rules?',
+                           'redcap_metadata_archieve' => count($ar),
+                           'values' => $ar,
+                           'query' => json_encode($query));
+        
+
         
         // apply the generated update statements
         if (!$dryrun) {
