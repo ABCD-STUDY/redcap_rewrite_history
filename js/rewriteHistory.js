@@ -13,11 +13,11 @@ jQuery(document).ready(function () {
             alert("Error: no value provided");
             return;
         }
-	if (oldV.indexOf(' ')) {
+	if (oldV.indexOf(' ') > -1) {
 	    alert("Error: the current name variable has spaces in the name");
 	    return;
 	}
-	if (newV.indexOf(' ')) {
+	if (newV.indexOf(' ') > -1) {
 	    alert("Error: the new item name has spaces!");
 	    return;
 	}
@@ -55,11 +55,11 @@ jQuery(document).ready(function () {
             alert("Error: no value provided");
             return;
         }
-	if (oldV.indexOf(' ')) {
+	if (oldV.indexOf(' ') > -1) {
 	    alert("Error: the current name variable has spaces in the name");
 	    return;
 	}
-	if (newV.indexOf(' ')) {
+	if (newV.indexOf(' ') > -1) {
 	    alert("Error: the new item name has spaces!");
 	    return;
 	}

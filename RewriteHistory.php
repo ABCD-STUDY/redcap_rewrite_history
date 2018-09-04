@@ -29,12 +29,14 @@ class RewriteHistory extends AbstractExternalModule {
 
 
   <h2><?php echo($title); ?></h2>
-        <p>The scope of this module is limited to REDCaps internal database. It cannot change any external modules, hooks, plugins, data entry triggers or scripts that use the API to communicate with REDCap.</p>
+        <p>An external module to rename an item in a development or production database. The module attempts to keep the history consistent. This includes data values, log entries, field history, branching logic, survey invitations, data quality rules, and reports.</p>
+
+        <p>The scope of this extension is limited to the REDCap internal database. It cannot change any external modules, hooks, plugins, data entry triggers or scripts that use the API to communicate with REDCap.</p>
         
         <p>Warning: This module is really dangerous. Million to one chance it will work. Rewriting history is just asking for trouble. You must be loony to trust whoever wrote this extension - or really desperate. If you really want to go forward from here make sure you can easily get your database back, test your backup - not just in theory, but you have to know that your backups are ok. Have you tried this extension on a copy of your database first? Is your database in maintenance mode - no other users logged in right now? Close your eyes, count slowly to 20, read this text again. Do you still want to go ahead?</p>
 
   <div class="form-group">
-    <label for="oldname">Project List</label>
+    <label for="oldname">Project List (select a project)</label>
     <select id="project-list" class="form-control">
          <option></option>
 
@@ -53,27 +55,29 @@ class RewriteHistory extends AbstractExternalModule {
   </div>
 
   <div class="form-group">
-    <label for="oldname">Current Item Name</label>
+    <label for="oldname">Current item name</label>
     <input type="text" class="form-control" id="oldname" aria-describedby="oldNameHelp" placeholder="Enter existing item name you want to replace">
     <small aria-describedby="oldNameHelp" class="form-text text-muted">Does this item exist in this project?</small>
   </div>
 
   <div class="form-group">
-    <label for="newname">Rename to Item Name</label>
+    <label for="newname">Rename to</label>
     <input type="text" class="form-control" id="newname" aria-describedby="newNameHelp" placeholder="Enter the new name">
     <small aria-describedby="newNameHelp" class="form-text text-muted">Is this entry correctly formatted? Is it new? It should not exist already.</small>
   </div>
 
 <?php if (!$restricedAccess) : ?>
   <div class="form-group">
-<button id="start-dryrun" class="btn btn-success">Dry run, totally safe</button>
+     <button id="start-dryrun" class="btn btn-success">Dry run, totally safe</button>&nbsp;
      <button id="start-rewrite" class="btn btn-danger">Destroy your database</button>
      &nbsp;<label><input type="checkbox" id="sure"> Are you sure?</label>
   </div>
 <?php endif; ?>
 
-  <textarea id="error-messages" title="debugging information" rows="30" cols="90"></textarea>
-
+  <div class="form-group">  
+    <label for="#error-messages">Internal (debug) messages</label>
+    <textarea id="error-messages" class="form-control" title="debugging information" rows="30" cols="90"></textarea>
+  </div>
 <?php
     }
 
@@ -471,15 +475,15 @@ class RewriteHistory extends AbstractExternalModule {
         
         
         //
-        // check for piping (in data quality rules))
+        // check for piping (in data quality rules)
         //
         $query = "SELECT rule_logic FROM redcap_data_quality_rules WHERE rule_logic REGEXP \"".self::pipingRegExp($oldVal)."\" AND project_id = ".$project_id;
         $result = db_query($query);
         $ar = array();
         while($row = db_fetch_assoc( $result ) ) {
-            $nv = self::replacePiping( $oldVal, $newVal, $row['element_note']);
+            $nv = self::replacePiping( $oldVal, $newVal, $row['rule_logic']);
             
-            $a = array( "old" => db_real_escape_string($row['element_note']),
+            $a = array( "old" => db_real_escape_string($row['rule_logic']),
                         "new" => db_real_escape_string($nv)
             );
             $a["update"] = sprintf("UPDATE IGNORE redcap_data_quality_rules SET rule_logic = '%s' WHERE rule_logic = '%s' AND project_id = %s", $a['new'], $a['old'], $project_id);
@@ -491,6 +495,72 @@ class RewriteHistory extends AbstractExternalModule {
                            'query' => json_encode($query));
         
 
+        //
+        // check for piping (in surveys, instructions)
+        //
+        $query = "SELECT instructions FROM redcap_surveys WHERE instructions REGEXP \"".self::pipingRegExp($oldVal)."\" AND project_id = ".$project_id;
+        $result = db_query($query);
+        $ar = array();
+        while($row = db_fetch_assoc( $result ) ) {
+            $nv = self::replacePiping( $oldVal, $newVal, $row['instructions']);
+            
+            $a = array( "old" => db_real_escape_string($row['instructions']),
+                        "new" => db_real_escape_string($nv)
+            );
+            $a["update"] = sprintf("UPDATE IGNORE redcap_surveys SET instructions = '%s' WHERE instructions = '%s' AND project_id = %s", $a['new'], $a['old'], $project_id);
+            $ar[] = $a;
+        }
+        $results[] = array('type' => 'Does the oldVar exist in any piping inside isntructions of surverys?',
+                           'redcap_metadata_archieve' => count($ar),
+                           'values' => $ar,
+                           'query' => json_encode($query));
+        
+
+        //
+        // check for piping (in surveys, acknowledgement)
+        //
+        $query = "SELECT acknowledgement FROM redcap_surveys WHERE acknowledgement REGEXP \"".self::pipingRegExp($oldVal)."\" AND project_id = ".$project_id;
+        $result = db_query($query);
+        $ar = array();
+        while($row = db_fetch_assoc( $result ) ) {
+            $nv = self::replacePiping( $oldVal, $newVal, $row['acknowledgement']);
+            
+            $a = array( "old" => db_real_escape_string($row['acknowledgement']),
+                        "new" => db_real_escape_string($nv)
+            );
+            $a["update"] = sprintf("UPDATE IGNORE redcap_surveys SET acknowledgement = '%s' WHERE acknowledgement = '%s' AND project_id = %s", $a['new'], $a['old'], $project_id);
+            $ar[] = $a;
+        }
+        $results[] = array('type' => 'Does the oldVar exist in any piping inside surveys acknowledgements?',
+                           'redcap_metadata_archieve' => count($ar),
+                           'values' => $ar,
+                           'query' => json_encode($query));
+        
+
+        
+        //
+        // check for variable name (in external module settings)
+        // TODO testing: External modules don't have to store variables using piping syntax, we need to check for
+        // enries that mention the variable (not parts of the variable) instead. Here we try with the default
+        // posix word boundaries.
+        //
+        $query = "SELECT value FROM redcap_external_module_settings WHERE value REGEXP '\b".preg_quote($oldVal)."\b' AND project_id = ".$project_id;
+        $result = db_query($query);
+        $ar = array();
+        while($row = db_fetch_assoc( $result ) ) {
+            $nv = self::replacePiping( $oldVal, $newVal, $row['value']);
+            
+            $a = array( "old" => db_real_escape_string($row['value']),
+                        "new" => db_real_escape_string($nv)
+            );
+            $a["update"] = sprintf("UPDATE IGNORE redcap_external_module_settings SET value = '%s' WHERE value = '%s' AND project_id = %s", $a['new'], $a['old'], $project_id);
+            $ar[] = $a;
+        }
+        $results[] = array('type' => 'Does the oldVar exist in any external module value field?',
+                           'redcap_external_module_settings' => count($ar),
+                           'values' => $ar,
+                           'query' => json_encode($query));
+        
         
         // apply the generated update statements
         if (!$dryrun) {
