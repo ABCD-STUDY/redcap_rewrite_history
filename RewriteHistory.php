@@ -51,7 +51,7 @@ class RewriteHistory extends AbstractExternalModule {
 ?>
 
     </select>
-    <small aria-describedby="oldNameHelp" class="form-text text-muted">Change is limited to the project selected - event if the item exists in other projects as well...</small>
+    <small aria-describedby="oldNameHelp" class="form-text text-muted">Change is limited to the project selected - even if the item exists in other projects as well...</small>
   </div>
 
   <div class="form-group">
@@ -69,7 +69,7 @@ class RewriteHistory extends AbstractExternalModule {
 <?php if (!$restricedAccess) : ?>
   <div class="form-group">
      <button id="start-dryrun" class="btn btn-success" title="A rehearsal of the procedure before the real one">Dry run, totally safe</button>&nbsp;
-     <button id="start-rewrite" class="btn btn-danger" title="Apply the indicated changes to the project">Destroy your database</button>
+     <button id="start-rewrite" class="btn btn-danger" title="Apply the indicated changes to the project">Destroy my database</button>
      &nbsp;<label><input type="checkbox" id="sure">&nbsp;Are you sure?</label>
   </div>
 <?php endif; ?>
