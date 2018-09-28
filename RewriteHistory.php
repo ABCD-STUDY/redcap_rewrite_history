@@ -113,7 +113,26 @@ class RewriteHistory extends AbstractExternalModule {
             echo(json_encode(array('message' => 'Error: the new variable already exists in this redcap database')));
             return;
         }
-        
+
+
+        //
+        // check the data dictionary for the current variable - refuse to do something if this variable does not exists already
+        //
+        $query  = "SELECT field_name FROM redcap_metadata WHERE field_name = '".prep($oldVal)."' AND project_id = ".$project_id;
+        $result = db_query($query);
+        $ar = array();
+        while($row = db_fetch_assoc( $result ) ) {
+            $a = array( "old" => db_real_escape_string($row['field_name']),
+                        "new" => db_real_escape_string($oldVal)
+            );
+            $ar[] = $a;
+        }
+        if (count($ar) == 0) {
+            echo(json_encode(array('message' => 'Error: the current variable does not exist in this redcap database')));
+            return;
+        }
+
+
         $results = array();
         
         //
@@ -134,10 +153,6 @@ class RewriteHistory extends AbstractExternalModule {
                            'redcap_data' => count($ar),
                            'values' => $ar,
                            'query' => json_encode($query));
-        if (count($ar) == 0) {
-            echo(json_encode(array('message' => 'Error: the current variable does not exist in this redcap database')));
-            return;
-        }
 
 
         $query = sprintf("SELECT field_name FROM redcap_metadata WHERE field_order = '1' AND project_id = %s", $project_id);
